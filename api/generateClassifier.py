@@ -2,7 +2,9 @@ from sklearn.datasets import fetch_openml
 import numpy as np
 from skimage.feature import hog
 from sklearn import preprocessing
-
+from collections import Counter
+from sklearn.svm import LinearSVC
+import joblib
 # โหลด Dataset
 # Fixes #11317
 # I have changed the use of fetch_mldata in examples,
@@ -32,7 +34,7 @@ dataset = fetch_openml('mnist_784')
 #Data Type and How to use numpy.array
 #https://numpy.org/doc/stable/reference/generated/numpy.array.html?highlight=array#numpy.array
 features = np.array(dataset.data, 'int16')
-label = np.array(dataset.target, 'int')
+labels = np.array(dataset.target, 'int')
 
 # Extract the hog features
 # ประกาศ list_hog_fd ให้สามารถเก็บข้อมูลในรูปแบบ array
@@ -63,6 +65,35 @@ for feature in features:
 hog_feature = np.array(list_hog_fd,'float64') #เปลี่ยนเป็น Data Type
 
 # Normalize the features
+# sklearn.preprocessing.StandardScaler
+# Standardize features by removing the mean and scaling to unit variance
+# https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler
+pp = preprocessing.StandardScaler().fit(hog_feature)
+hog_features = pp.transform(hog_feature)
 
 
 
+print("Count of digits in dataset", Counter(labels))
+
+# Create an linear SVM Object
+# sklearn.svm: Support Vector Machines https://scikit-learn.org/stable/modules/classes.html?highlight=sklearn%20svm#module-sklearn.svm
+# sklearn.svm.LinearSVC
+clf = LinearSVC()
+
+# Perform the training
+#fit(X, y[, sample_weight]) Fit the model according to the given training data.
+# fit(X, y, sample_weight=None)
+# X : {array-like, sparse matrix} of shape (n_samples, n_features)
+# Training vector, where n_samples in the number of samples and n_features is the number of features.
+# y : array-like of shape (n_samples,)
+# Target vector relative to X.
+
+clf.fit(hog_features, labels)
+
+# Save the classifier
+# from joblib import dump, load
+# dump(clf, 'filename.joblib')
+# https://scikit-learn.org/stable/modules/model_persistence.html
+#The JPEG Level Compression
+#https://howtoscan.ca/scanning-tips/scan-jpeg-levels.php
+joblib.dump((clf, pp), "digits_cls.pkl", compress=3)
