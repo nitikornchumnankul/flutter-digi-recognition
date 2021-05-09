@@ -59,7 +59,7 @@ list_hog_fd = []
 #Gives a new shape to an array without changing its data.
 
 for feature in features:
-    fd = hog(feature.reshape((28, 28)), orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualise=False)
+    fd = hog(feature.reshape((28, 28)), orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualize=False)
     list_hog_fd.append(fd) #นำ Data เข้าไปเก็บใน list_hog_fd ในรูปแบบของ array
 
 hog_feature = np.array(list_hog_fd,'float64') #เปลี่ยนเป็น Data Type
