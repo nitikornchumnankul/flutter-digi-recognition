@@ -4,6 +4,8 @@ import joblib
 import cv2
 import numpy as np
 from skimage.feature import hog
+import os
+
 #Get the path of the training set
 # Argparse Tutorial¶ https://docs.python.org/3/howto/argparse.html
 # create file a.py is like 'ls' that is for show on recent directory
@@ -47,7 +49,9 @@ clf , pp = joblib.load(args["classiferPath"])
 # Raster and Vector geospatial data supported by GDAL (see the Note section)
 # https://docs.opencv.org/master/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56
 im = cv2.imread(args["image"])
-
+cv2.namedWindow("TEST", cv2.WINDOW_NORMAL)
+cv2.imshow("TEST", im)
+cv2.waitKey()
 # Convert to grayscale and apply Gaussian filtering
 # cvtColor()
 # Converts an image from one color space to another.
@@ -61,6 +65,9 @@ im = cv2.imread(args["image"])
 # https://docs.opencv.org/master/d8/d01/group__imgproc__color__conversions.html#ga4e0972be5de079fed4e3a10e24ef5ef0
 
 im_gray = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
+cv2.namedWindow("Gray", cv2.WINDOW_NORMAL)
+cv2.imshow("Gray", im_gray)
+cv2.waitKey()
 
 # GaussianBlur()
 # cv.GaussianBlur(	src, ksize, sigmaX[, dst[, sigmaY[, borderType]]]	)
@@ -83,7 +90,9 @@ im_gray = cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
 # borderType	pixel extrapolation method, see BorderTypes. BORDER_WRAP is not supported.
 # https://docs.opencv.org/master/d4/d86/group__imgproc__filter.html#gaabe8c836e97159a9193fb0b11ac52cf1
 im_gray = cv2.GaussianBlur(im_gray,(5,5), 0)
-
+cv2.namedWindow("GaussianBlur", cv2.WINDOW_NORMAL)
+cv2.imshow("GaussianBlur", im_gray)
+cv2.waitKey()
 # Threshold the image
 # ◆ threshold()
 # Applies a fixed-level threshold to each array element.
@@ -102,6 +111,9 @@ im_gray = cv2.GaussianBlur(im_gray,(5,5), 0)
 
 
 ret, im_th = cv2.threshold(im_gray, 90, 255, cv2.THRESH_BINARY_INV)
+cv2.namedWindow("threshold", cv2.WINDOW_NORMAL)
+cv2.imshow("threshold", ret)
+cv2.waitKey()
 
 # Find contours in the image
 # findContours()
@@ -123,31 +135,79 @@ ret, im_th = cv2.threshold(im_gray, 90, 255, cv2.THRESH_BINARY_INV)
 # offset	Optional offset by which every contour point is shifted. This is useful if the contours are extracted from the image ROI and then they should be analyzed in the whole image context.
 # https://docs.opencv.org/master/d3/dc0/group__imgproc__shape.html#gadf1ad6a0b82947fa1fe3c3d497f260e0
 
+# RETR_EXTERNAL
+# Python: cv.RETR_EXTERNA : retrieves only the extreme outer contours. It sets hierarchy[i][2]=hierarchy[i][3]=-1 for all the contours.
+
+# CHAIN_APPROX_SIMPLE
+# Python: cv.CHAIN_APPROX_SIMPLE
+
 ctrs, hier = cv2.findContours(im_th.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+cv2.namedWindow("findContours", cv2.WINDOW_NORMAL)
+cv2.imshow("findContours", im_th.copy())
+cv2.waitKey()
+
 # Get rectangles contains each contour
+# cv.boundingRect(array)
+# Calculates the up-right bounding rectangle of a point set or non-zero pixels of gray-scale image.
+# The function calculates and returns the minimal up-right bounding rectangle for the specified point set or non-zero pixels of gray-scale image.
+# Parameters
+# array:	Input gray-scale image or 2D point set, stored in std::vector or Mat(https://docs.opencv.org/master/d3/d63/classcv_1_1Mat.html).
+
+# https://docs.opencv.org/master/d3/dc0/group__imgproc__shape.html#ga103fcbda2f540f3ef1c042d6a9b35ac7
 rects = [cv2.boundingRect(ctr) for ctr in ctrs]
+print(rects)
+
 
 # For each rectangular region, calculate HOG features and predict
 # the digit using Linear SVM.
 for rect in rects:
     # Draw the rectangles
+    # Python OpenCV | cv2.rectangle() method Tutorial from GreekforGreek
+    # image = cv2.rectangle(image, start_point, end_point, color, thickness)
+    # https://www.geeksforgeeks.org/python-opencv-cv2-rectangle-method/
     cv2.rectangle(im, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255, 0), 3)
+    #####
+    cv2.namedWindow("Rectangle" + str(rect[0]), cv2.WINDOW_NORMAL)
+    cv2.imshow("Rectangle" + str(rect[0]), cv2.rectangle(im, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255, 0), 3))
+    cv2.waitKey()
+
     # Make the rectangular region around the digit
     leng = int(rect[3] * 1.6)
     pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
     pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
     roi = im_th[pt1:pt1+leng, pt2:pt2+leng]
     # Resize the image
-    roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+    #OpenCV Resize image using cv2.resize()
+    # The syntax of resize function in OpenCV is
+    # cv2.resize(src, dsize[, dst[, fx[, fy[, interpolation]]]])
+    # https://www.tutorialkart.com/opencv/python/opencv-python-resize-image/
+
+    roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA) #มีนัยสำคัญต่อการวิเคราะห์
+    # print(roi)
+
+    # Morphological Operations
+    # https://docs.opencv.org /3.4/db/df6/tutorial_erosion_dilatation.html
+    # Dilates an image by using a specific structuring element.
+    # dilate()
+    # https://docs.opencv.org/3.4/d4/d86/group__imgproc__filter.html
     roi = cv2.dilate(roi, (3, 3))
     # Calculate the HOG features
     roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualize=False)
     roi_hog_fd = pp.transform(np.array([roi_hog_fd], 'float64'))
+
     nbr = clf.predict(roi_hog_fd)
-    cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]),cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
+    # Python OpenCV | cv2.putText() method Tutorials from GreekforGreek
+    # https://www.geeksforgeeks.or /python-opencv-cv2-puttext-method/
+    # image = cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
+    cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
 
 cv2.namedWindow("Resulting Image with Rectangular ROIs", cv2.WINDOW_NORMAL)
 cv2.imshow("Resulting Image with Rectangular ROIs", im)
+# Python OpenCV | cv2.imwrite() method Tutorials from GreeksforGreeks
+# https://www.geeksforgeeks.org/python-opencv-cv2-imwrite-method/
+# Document cv2.imwrite()
+# https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#gabbc7ef1aa2edfaa87772f1202d67e0ce
+cv2.imwrite('result.jpg', cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3))
 cv2.waitKey()
 
