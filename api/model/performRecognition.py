@@ -22,13 +22,13 @@ parser.add_argument("-i", "--image", help="Path to Image", required="True")
 # you can use the standard Python idiom, vars():
 
 args = vars(parser.parse_args())
-
+print('Args: ' + str(args))
 # Load the classifier
 # joblib.load(filename, mmap_mode=None
 # Parameters:	filename: str, pathlib.Path, or file object.
 # The file object or path of the file from which to load the object
 clf , pp = joblib.load(args["classiferPath"])
-
+print('classiferPath: ' + str(clf))
 # Read the input image
 # loads an image from a file.
 # The function imread loads an image from the specified file and returns it.
@@ -190,13 +190,21 @@ for rect in rects:
     # https://docs.opencv.org /3.4/db/df6/tutorial_erosion_dilatation.html
     # Dilates an image by using a specific structuring element.
     # dilate()
+    # Dilates an image by using a specific structuring element.
+    # The function dilates the source image using the specified structuring element that determines the shape of a pixel
+    # neighborhood over which the maximum is taken:
+
     # https://docs.opencv.org/3.4/d4/d86/group__imgproc__filter.html
     roi = cv2.dilate(roi, (3, 3))
+
     # Calculate the HOG features
     roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14), cells_per_block=(1, 1), visualize=False)
+    # print(roi_hog_fd)
     roi_hog_fd = pp.transform(np.array([roi_hog_fd], 'float64'))
-
+    # print(roi_hog_fd)
+    ##
     nbr = clf.predict(roi_hog_fd)
+    print('Digi prediction: ' + str(nbr))
     # Python OpenCV | cv2.putText() method Tutorials from GreekforGreek
     # https://www.geeksforgeeks.or /python-opencv-cv2-puttext-method/
     # image = cv2.putText(image, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
