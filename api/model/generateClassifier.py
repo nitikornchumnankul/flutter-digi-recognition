@@ -78,7 +78,7 @@ print("Count of digits in dataset", Counter(labels))
 # Create an linear SVM Object
 # sklearn.svm: Support Vector Machines https://scikit-learn.org/stable/modules/classes.html?highlight=sklearn%20svm#module-sklearn.svm
 # sklearn.svm.LinearSVC
-clf = LinearSVC()
+clf = LinearSVC(dual=True, max_iter=10000)
 
 # Perform the training
 #fit(X, y[, sample_weight]) Fit the model according to the given training data.
